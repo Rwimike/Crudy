@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CRUDY: El Experimento</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
+  <style id="app-style">
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'VT323', monospace;
+      background-color: #000;
+      color: #fff;
+    }
+
+    .game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .bg-flesh {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #8b0000;
+      z-index: -2;
+    }
+
+    .vessels {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      opacity: 0.7;
+    }
+
+    .vessel {
+      position: absolute;
+      background-color: #6d0101;
+      border-radius: 50%;
+      filter: blur(5px);
+      animation: pulse 3s infinite alternate;
+      opacity: 0.7;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.5; }
+      100% { transform: scale(1.1); opacity: 0.8; }
+    }
+
+    .game-content {
+      position: relative;
+      height: 100%;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 10;
+    }
+
+    .text-container {
+      background-color: rgba(0, 0, 0, 0.8);
+      border: 2px solid #6d0101;
+      border-radius: 8px;
+      padding: 2rem;
+      max-width: 800px;
+      max-height: 60vh;
+      overflow-y: auto;
+      margin-bottom: 2rem;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+      text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+    }
+
+    .choices-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .choice-btn {
+      background-color: #350000;
+      color: #fff;
+      border: 1px solid #6d0101;
+      border-radius: 4px;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: left;
+      font-size: 1.2rem;
+    }
+
+    .choice-btn:hover {
+      background-color: #6d0101;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+    }
+
+    .game-title {
+      font-family: 'Creepster', cursive;
+      font-size: 4rem;
+      text-shadow: 0 0 10px #ff0000;
+      margin-bottom: 2rem;
+    }
+
+    .transition-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      z-index: 100;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .transition-text {
+      font-size: 3rem;
+      color: #ff0000;
+      text-shadow: 0 0 15px #ff0000;
+    }
+
+    .sequence-display {
+      display: flex;
+      gap: 1rem;
+      margin: 2rem 0;
+      justify-content: center;
+    }
+
+    .sequence-item {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .timer {
+      font-size: 2rem;
+      margin: 1rem 0;
+      color: #ff0000;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .door {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 1rem;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .door:hover {
+      transform: scale(1.05);
+    }
+
+    .door-img {
+      width: 150px;
+      height: 200px;
+      object-fit: cover;
+      border: 3px solid #6d0101;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+      filter: brightness(0.8);
+    }
+
+    .door:hover .door-img {
+      filter: brightness(1);
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+    }
+
+    .doors-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .crudy-text {
+      color: #ff3333;
+      font-style: italic;
+      text-shadow: 0 0 5px #ff0000;
+    }
+
+    .typed-text::after {
+      content: '|';
+      animation: blink 0.7s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .character-text {
+      font-weight: bold;
+      color: #aaddff;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .text-container {
+        padding: 1rem;
+        max-height: 50vh;
+      }
+      
+      .door-img {
+        width: 100px;
+        height: 150px;
+      }
+      
+      .game-title {
+        font-size: 2.5rem;
+      }
+      
+      .choice-btn {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="bg-flesh"></div>
+    <div class="vessels" id="vessels"></div>
+    
+    <div class="header">
+      <div class="level">Nivel: <span id="level-display">1</span></div>
+      <div class="attempts" id="attempts-container">Intentos: <span id="attempts-display">-</span></div>
+    </div>
+    
+    <div class="transition-overlay" id="transition-overlay">
+      <div class="transition-text" id="transition-text"></div>
+    </div>
+    
+    <div class="game-content" id="game-content">
+      <!-- Game content will be dynamically inserted here -->
+    </div>
+  </div>
+
+  <audio id="ambient-audio" loop>
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_5adfeefb28.mp3?filename=horror-ambient-14548.mp3" type="audio/mpeg">
+  </audio>
+  
+  <audio id="door-audio">
+    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_9abb50d0a6.mp3?filename=creaking-door-6248.mp3" type="audio/mpeg">
+  </audio>
+  
+  <audio id="whisper-audio">
+    <source src="https://cdn.pixabay.com/download/audio/2022/01/18/audio_da93a387fe.mp3?filename=whispers-atmospheric-18-seconds-132334.mp3" type="audio/mpeg">
+  </audio>
+  
+  <audio id="laugh-audio">
+    <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_f1c2f1efd1.mp3?filename=creepy-little-girl-laughing-14798.mp3" type="audio/mpeg">
+  </audio>
+
+  <script id="app-script">
+    // Game state
+    const gameState = {
+      currentLevel: 1,
+      attempts: 3,
+      choices: {},
+      sequence: [],
+      userSequence: []
+    };
+
+    // DOM Elements
+    const gameContent = document.getElementById('game-content');
+    const levelDisplay = document.getElementById('level-display');
+    const attemptsDisplay = document.getElementById('attempts-display');
+    const attemptsContainer = document.getElementById('attempts-container');
+    const transitionOverlay = document.getElementById('transition-overlay');
+    const transitionText = document.getElementById('transition-text');
+    
+    // Audio Elements
+    const ambientAudio = document.getElementById('ambient-audio');
+    const doorAudio = document.getElementById('door-audio');
+    const whisperAudio = document.getElementById('whisper-audio');
+    const laughAudio = document.getElementById('laugh-audio');
+
+    // Initialize vessels in background
+    function createVessels() {
+      const vesselsContainer = document.getElementById('vessels');
+      for (let i = 0; i < 20; i++) {
+        const vessel = document.createElement('div');
+        vessel.classList.add('vessel');
+        
+        // Random position
+        vessel.style.left = `${Math.random() * 100}%`;
+        vessel.style.top = `${Math.random() * 100}%`;
+        
+        // Random size
+        const size = 20 + Math.random() * 100;
+        vessel.style.width = `${size}px`;
+        vessel.style.height = `${size}px`;
+        
+        // Random animation delay
+        vessel.style.animationDelay = `${Math.random() * 2}s`;
+        
+        vesselsContainer.appendChild(vessel);
+      }
+    }
+
+    // Show transition screen
+    function showTransition(text, duration = 2000) {
+      return new Promise(resolve => {
+        transitionText.textContent = text;
+        transitionOverlay.style.opacity = 1;
+        
+        setTimeout(() => {
+          transitionOverlay.style.opacity = 0;
+          setTimeout(resolve, 500);
+        }, duration);
+      });
+    }
+
+    // Type text animation
+    function typeText(element, text, speed = 30) {
+      return new Promise(resolve => {
+        element.classList.add('typed-text');
+        element.textContent = '';
+        
+        let i = 0;
+        const typing = setInterval(() => {
+          if (i < text.length) {
+            element.textContent += text.charAt(i);
+            i++;
+          } else {
+            clearInterval(typing);
+            element.classList.remove('typed-text');
+            resolve();
+          }
+        }, speed);
+      });
+    }
+
+    // Save game state to localStorage
+    function saveGameState() {
+      localStorage.setItem('crudyGame', JSON.stringify(gameState));
+    }
+
+    // Load game state from localStorage
+    function loadGameState() {
+      const savedState = localStorage.getItem('crudyGame');
+      if (savedState) {
+        const parsedState = JSON.parse(savedState);
+        Object.assign(gameState, parsedState);
+        updateUI();
+      }
+    }
+
+    // Update UI based on current state
+    function updateUI() {
+      levelDisplay.textContent = gameState.currentLevel;
+      
+      if (gameState.currentLevel === 3 || gameState.currentLevel === 5) {
+        attemptsContainer.classList.remove('hidden');
+        attemptsDisplay.textContent = gameState.attempts;
+      } else {
+        attemptsContainer.classList.add('hidden');
+      }
+    }
+
+    // Handle choice selection
+    function makeChoice(choice, value) {
+      gameState.choices[choice] = value;
+      saveGameState();
+      
+      // Play door sound for transitions
+      if (choice === 'puerta_elegida') {
+        doorAudio.play();
+      }
+      
+      // Progress game based on choice
+      advanceLevel();
+    }
+
+    // Generate level content
+    async function loadLevel() {
+      // Reset content
+      gameContent.innerHTML = '';
+      
+      switch (gameState.currentLevel) {
+        case 1:
+          await loadIntroLevel();
+          break;
+        case 2:
+          await loadDoorLevel();
+          break;
+        case 3:
+          await loadMemoryLevel();
+          break;
+        case 4:
+          await loadLogicLevel();
+          break;
+        case 5:
+          await loadFinalLevel();
+          break;
+        case 6:
+        case 7:
+        case 8:
+          await loadExtraLevels();
+          break;
+        default:
+          await loadEnding();
+          break;
+      }
+      
+      updateUI();
+    }
+
+    // Load intro level content
+    async function loadIntroLevel() {
+      // Start ambient sound
+      ambientAudio.volume = 0.3;
+      ambientAudio.play();
+      
+      // Create title
+      const title = document.createElement('h1');
+      title.classList.add('game-title');
+      title.textContent = 'CRUDY: El Experimento';
+      gameContent.appendChild(title);
+      
+      // Create text container
+      const textContainer = document.createElement('div');
+      textContainer.classList.add('text-container');
+      gameContent.appendChild(textContainer);
+      
+      // Create narrative text
+      const narrativeText = document.createElement('p');
+      narrativeText.classList.add('narrative');
+      textContainer.appendChild(narrativeText);
+      
+      // Type out intro text
+      await typeText(narrativeText, "Despiertas confundido en un extraño lugar. A tu alrededor, otras cuatro personas emergen de cápsulas similares. La habitación parece... orgánica, como si estuviera hecha de carne viva. Las paredes palpitan suavemente. Nadie recuerda cómo llegaron aquí.");
+      
+      // Add character dialogue
+      const dialogueDiv = document.createElement('p');
+      dialogueDiv.classList.add('mt-4');
+      dialogueDiv.innerHTML = '<span class="character-text">Brahian:</span> No sé quién soy... pero al menos hablamos el mismo idioma.';
+      textContainer.appendChild(dialogueDiv);
+      
+      const dialogueDiv2 = document.createElement('p');
+      dialogueDiv2.classList.add('mt-2');
+      dialogueDiv2.innerHTML = '<span class="character-text">Denis:</span> Deberíamos ponernos nombres para identificarnos.';
+      textContainer.appendChild(dialogueDiv2);
+      
+      const dialogueDiv3 = document.createElement('p');
+      dialogueDiv3.classList.add('mt-2');
+      dialogueDiv3.innerHTML = 'Todos acuerdan llamarse: <span class="character-text">Brahian, Denis, Johan, Miguel y Robin.</span>';
+      textContainer.appendChild(dialogueDiv3);
+      
+      // Add CRUDY's message after a delay
+      setTimeout(async () => {
+        laughAudio.play();
+        
+        const crudyDiv = document.createElement('p');
+        crudyDiv.classList.add('mt-6', 'crudy-text');
+        textContainer.appendChild(crudyDiv);
+        
+        await typeText(crudyDiv, "—Bienvenidos a aquí a mi pequeño experimento. Soy CRUDY y los invito a jugar un poco conmigo. Estoy de verdad aburrida, solo por esta vez seré buena y los dejaré salir si me ganan.");
+        
+        const crudyDiv2 = document.createElement('p');
+        crudyDiv2.classList.add('mt-2', 'crudy-text');
+        textContainer.appendChild(crudyDiv2);
+        
+        await typeText(crudyDiv2, "—Miren, es simple: son varios desafíos que pueden llevarlos a la muerte o a escapar. Ustedes eligen. Si se quedan aquí morirán de hambre y sed...");
+        
+        // Create start button
+        const choicesContainer = document.createElement('div');
+        choicesContainer.classList.add('choices-container');
+        gameContent.appendChild(choicesContainer);
+        
+        const startBtn = document.createElement('button');
+        startBtn.classList.add('choice-btn');
+        startBtn.textContent = 'Comenzar el experimento';
+        startBtn.addEventListener('click', () => {
+          makeChoice('start', true);
+        });
+        choicesContainer.appendChild(startBtn);
+      }, 2000);
+    }
+
+    // Load door choice level
+    async function loadDoorLevel() {
+      // Play whisper for door 1
+      whisperAudio.volume = 0.2;
+      whisperAudio.loop = true;
+      whisperAudio.play();
+      
+      // Create text container
+      const textContainer = document.createElement('div');
+      textContainer.classList.add('text-container');
+      gameContent.appendChild(textContainer);
+      
+      // Create narrative text
+      const narrativeText = document.createElement('p');
+      narrativeText.classList.add('narrative');
+      textContainer.appendChild(narrativeText);
+      
+      // Type out level text
+      await typeText(narrativeText, "Las paredes de carne pulsante revelan tres puertas orgánicas que se abren con un sonido húmedo y desagradable. El grupo observa con desconfianza estas nuevas opciones.");
+      
+      // Add CRUDY dialogue
+      const dialogueDiv = document.createElement('p');
+      dialogueDiv.classList.add('mt-4', 'crudy-text');
+      textContainer.appendChild(dialogueDiv);
+      await typeText(dialogueDiv, "—Las reglas son simples, como ya dije: elijan sabiamente. Las puertas están marcadas, pero no con palabras... sino con sensaciones. ¿Qué les provoca cada una?");
+      
+      // Create doors container
+      const doorsContainer = document.createElement('div');
+      doorsContainer.classList.add('doors-container');
+      gameContent.appendChild(doorsContainer);
+      
+      // Door 1 - whispers (short path)
+      const door1 = document.createElement('div');
+      door1.classList.add('door');
+      door1.innerHTML = `
+        <img src="https://cdn.pixabay.com/photo/2017/07/08/11/36/door-2484547_960_720.jpg" alt="Puerta 1" class="door-img">
+        <p>Puerta 1: Susurros dulces te invitan</p>
+      `;
+      door1.addEventListener('click', () => {
+        whisperAudio.pause();
+        makeChoice('puerta_elegida', 1);
+      });
+      doorsContainer.appendChild(door1);
+      
+      // Door 2 - cold air (long path)
+      const door2 = document.createElement('div');
+      door2.classList.add('door');
+      door2.innerHTML = `
+        <img src="https://cdn.pixabay.com/photo/2016/10/27/17/51/door-1775562_960_720.jpg" alt="Puerta 2" class="door-img">
+        <p>Puerta 2: Emite una brisa gélida</p>
+      `;
+      door2.addEventListener('click', () => {
+        whisperAudio.pause();
+        makeChoice('puerta_elegida', 2);
+      });
+      doorsContainer.appendChild(door2);
+      
+      // Door 3 - metallic sound (trap)
+      const door3 = document.createElement('div');
+      door3.classList.add('door');
+      door3.innerHTML = `
+        <img src="https://cdn.pixabay.com/photo/2016/04/01/10/57/door-1300137_960_720.png" alt="Puerta 3" class="door-img">
+        <p>Puerta 3: Sonido metálico y olor a quemado</p>
+      `;
+      door3.addEventListener('click', () => {
+        whisperAudio.pause();
+        makeChoice('puerta_elegida', 3);
+      });
+      doorsContainer.appendChild(door3);
+      
+      // Add character dialogue
+      const brahianDiv = document.createElement('p');
+      brahianDiv.classList.add('mt-4');
+      brahianDiv.innerHTML = '<span class="character-text">Brahian:</span> Esto es una locura... pero no tenemos opción.';
+      textContainer.appendChild(brahianDiv);
+    }
+
+    // Load memory sequence level
+    async function loadMemoryLevel() {
+      // Reset attempts for this level
+      gameState.attempts = 3;
+      gameState.sequence = [];
+      gameState.userSequence = [];
+      
+      // Generate random sequence
+      for (let i = 0; i < 4; i++) {
+        gameState.sequence.push(Math.floor(Math.random() * 4));
+      }
+      saveGameState();
+      
+      // Create text container
+      const textContainer = document.createElement('div');
+      textContainer.classList.add('text-container');
+      gameContent.appendChild(textContainer);
+      
+      // Create narrative text
+      const narrativeText = document.createElement('p');
+      narrativeText.classList.add('narrative');
+      textContainer.appendChild(narrativeText);
+      
+      // Type out level text
+      await typeText(narrativeText, "Las decisiones previas los han llevado a una cámara extraña. Una de las paredes comienza a brillar con patrones de colores.");
+      
+      // Add CRUDY dialogue
+      const dialogueDiv = document.createElement('p');
+      dialogueDiv.classList.add('mt-4', 'crudy-text');
+      textContainer.appendChild(dialogueDiv);
+      await typeText(dialogueDiv, "—¿Memoria? ¿Atención? Qué raras cosas tienen los humanos...");
+      
+      const dialogueDiv2 = document.createElement('p');
+      dialogueDiv2.classList.add('mt-2');
+      dialogueDiv2.innerHTML = 'Una secuencia de colores brillará en la pared. Debes repetirla correctamente para continuar.';
+      textContainer.appendChild(dialogueDiv2);
+      
+      // Create sequence display
+      const sequenceDisplay = document.createElement('div');
+      sequenceDisplay.classList.add('sequence-display');
+      gameContent.appendChild(sequenceDisplay);
+      
+      // Create color blocks
+      const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00'];
+      for (let i = 0; i < 4; i++) {
+        const colorBlock = document.createElement('div');
+        colorBlock.classList.add('sequence-item');
+        colorBlock.dataset.index = i;
+        colorBlock.style.backgroundColor = colors[i];
+        colorBlock.style.opacity = '0.5';
+        
+        colorBlock.addEventListener('click', () => {
+          // Only allow clicks when it's user's turn
+          if (gameState.userSequence !== null) {
+            // Visual feedback
+            colorBlock.style.opacity = '1';
+            setTimeout(() => {
+              colorBlock.style.opacity = '0.5';
+            }, 300);
+            
+            // Record user selection
+            gameState.userSequence.push(parseInt(colorBlock.dataset.index));
+            
+            // Check if sequence is complete
+            if (gameState.userSequence.length === gameState.sequence.length) {
+              checkSequence();
+            }
+          }
+        });
+        
+        sequenceDisplay.appendChild(colorBlock);
+      }
+      
+      // Create timer display
+      const timerDisplay = document.createElement('div');
+      timerDisplay.classList.add('timer');
+      timerDisplay.textContent = 'Observa la secuencia...';
+      gameContent.appendChild(timerDisplay);
+      
+      // Play sequence after a short delay
+      setTimeout(() => {
+        playSequence();
+      }, 2000);
+      
+      // Function to play the sequence
+      function playSequence() {
+        timerDisplay.textContent = 'Observa la secuencia...';
+        const blocks = sequenceDisplay.querySelectorAll('.sequence-item');
+        gameState.userSequence = null; // Disable user input during sequence display
+        
+        // Play each color in the sequence
+        let i = 0;
+        const intervalId = setInterval(() => {
+          // Reset all blocks
+          blocks.forEach(block => block.style.opacity = '0.5');
+          
+          if (i < gameState.sequence.length) {
+            // Highlight the current block in sequence
+            const currentBlock = blocks[gameState.sequence[i]];
+            currentBlock.style.opacity = '1';
+            i++;
+          } else {
+            clearInterval(intervalId);
+            // Enable user input after sequence completes
+            gameState.userSequence = [];
+            timerDisplay.textContent = 'Tu turno - Repite la secuencia';
+          }
+        }, 1000);
+      }
+      
+      // Check if user's sequence matches
+      function checkSequence() {
+        let correct = true;
+        
+        for (let i = 0; i < gameState.sequence.length; i++) {
+          if (gameState.sequence[i] !== gameState.userSequence[i]) {
+            correct = false;
+            break;
+          }
+        }
+        
+        if (correct) {
+          timerDisplay.textContent = '¡Correcto!';
+          
+          // Show success message and advance
+          setTimeout(async () => {
+            await showTransition('¡Secuencia correcta!');
+            gameState.currentLevel = 4; // Advance to logic level
+            saveGameState();
+            loadLevel();
+          }, 1500);
+        } else {
+          // Decrease attempts
+          gameState.attempts--;
+          saveGameState();
+          
+          if (gameState.attempts > 0) {
+            timerDisplay.textContent = `Incorrecto. Intentos restantes: ${gameState.attempts}`;
+            
+            // Reset user sequence and play again after delay
+            setTimeout(() => {
+              gameState.userSequence = [];
+              playSequence();
+            }, 1500);
+          } else {
+            // Game over
+            timerDisplay.textContent = '¡Has fallado!';
+            
+            setTimeout(async () => {
+              laughAudio.play();
+              await showTransition('CRUDY ríe mientras las paredes se cierran...');
+              
+              // Reset game
+              gameState.currentLevel = 1;
+              gameState.choices = {};
+              saveGameState();
+              loadLevel();
+            }, 1500);
+          }
+        }
+        
+        updateUI();
+      }
+    }
+
+    // Load logic level
+    async function loadLogicLevel() {
+      // Create text container
+      const textContainer = document.createElement('div');
+      textContainer.classList.add('text-container');
+      gameContent.appendChild(textContainer);
+      
+      // Create narrative text
+      const narrativeText = document.createElement('p');
+      narrativeText.classList.add('narrative');
+      textContainer.appendChild(narrativeText);
+      
+      // Type out level text
+      await typeText(narrativeText, "El entorno cambia drásticamente. Ya no están en un espacio orgánico, sino en un lugar geométrico imposible, con estructuras flotantes y patrones fractales.");
+      
+      // Add CRUDY dialogue
+      const dialogueDiv = document.createElement('p');
+      dialogueDiv.classList.add('mt-4', 'crudy-text');
+      textContainer.appendChild(dialogueDiv);
+      await typeText(dialogueDiv, "—Entramos en mi mente. Cuidado con lo que piensan… aquí, cada decisión afecta otra.");
+      
+      // Create choices container
+      const choicesContainer = document.createElement('div');
+      choicesContainer.classList.add('choices-container');
+      gameContent.appendChild(choicesContainer);
+      
+      // Logic questions based on previous choices
+      const doorChosen = gameState.choices.puerta_elegida || 1;
+      
+      if (doorChosen === 1) {
+        // Short path questions
+        const choiceBtn1 = document.createElement('button');
+        choiceBtn1.classList.add('choice-btn');
+        choiceBtn1.textContent = 'Ingresar la palabra clave "CRUDY"';
+        choiceBtn1.addEventListener('click', () => {
+          makeChoice('logica_respuesta', 'clave_correcta');
+        });
+        choicesContainer.appendChild(choiceBtn1);
+        
+        const choiceBtn2 = document.createElement('button');
+        choiceBtn2.classList.add('choice-btn');
+        choiceBtn2.textContent = '¿Salvarías a uno que amas aunque traiciones a todos?';
+        choiceBtn2.addEventListener('click', () => {
+          makeChoice('logica_respuesta', 'dilema_moral');
+        });
+        choicesContainer.appendChild(choiceBtn2);
+        
+        const choiceBtn3 = document.createElement('button');
+        choiceBtn3.classList.add('choice-btn');
+        choiceBtn3.textContent = 'Presionar el botón "Saltar"';
+        choiceBtn3.addEventListener('click', () => {
+          makeChoice('logica_respuesta', 'salto_rapido');
+        });
+        choicesContainer.appendChild(choiceBtn3);
+      } else if (doorChosen === 2) {
+        // Long path questions
+        const choiceBtn1 = document.createElement('button');
+        choiceBtn1.classList.add('choice-btn');
+        choiceBtn1.textContent = '"El camino más largo es a veces el más corto" - Seguir el camino oscuro';
+        choiceBtn1.addEventListener('click', () => {
+          makeChoice('logica_respuesta', 'camino_oscuro');
+        });
+        choicesContainer.appendChild(choiceBtn1);
+        
+        const choiceBtn2 = document.createElement('button');
+        choiceBtn2.classList.add('choice-btn');
+        choiceBtn2.textContent = '"Lo que no te mata, te transforma" - Atravesar el portal rojo';
+        choiceBtn2.addEventListener('click', () => {
+          makeChoice('logica_respuesta', 'portal_rojo');
+        });
+        choicesContainer.appendChild(choiceBtn2);
+      } else {
+        // Trap path questions (loop escape)
+        const loopText = document.createElement('p');
+        loopText.classList.add('mt-4');
+        loopText.textContent = 'Pareces atrapado en un bucle infinito. Todas las puertas te llevan al mismo lugar.';
+        textContainer.appendChild(loopText);
+        
+        const choiceBtn1 = document.createElement('button');
+        choiceBtn1.classList.add('choice-btn');
+        choiceBtn1.textContent = 'Intentar otra puerta';
+        choiceBtn1.addEventListener('click', () => {
+          // This just refreshes the same content to simulate the loop
+          loadLogicLevel();
+        });
+        choicesContainer.appendChild(choiceBtn1);
+        
+        const choiceBtn2 = document.createElement('button');
+        choiceBtn2.classList.add('choice-btn');
+        choiceBtn2.textContent = 'No hacer nada y esperar';
+        choiceBtn2.addEventListener('click', () => {
+          makeChoice('logica_respuesta', 'romper_bucle');
+        });
+        choicesContainer.appendChild(choiceBtn2);
+      }
+    }
+
+    // Load final level
+    async function loadFinalLevel() {
+      // Reset attempts for this level
+      gameState.attempts = 3;
+      saveGameState();
+      
+      // Create text container
+      const textContainer = document.createElement('div');
+      textContainer.classList.add('text-container');
+      gameContent.appendChild(textContainer);
+      
+      // Create narrative text
+      const narrativeText = document.createElement('p');
+      narrativeText.classList.add('narrative');
+      textContainer.appendChild(narrativeText);
+      
+      // Type out level text
+      await typeText(narrativeText, "Has llegado al juicio final. Frente a ti aparece una consola brillante. CRUDY se materializa como una figura humanoide que parpadea y se distorsiona.");
+      
+      // Add CRUDY dialogue
+      const dialogueDiv = document.createElement('p');
+      dialogueDiv.classList.add('mt-4', 'crudy-text');
+      textContainer.appendChild(dialogueDiv);
+      await typeText(dialogueDiv, "—Última prueba. Respuestas correctas = libertad. Fallos = reciclaje.");
+      
+      // Current question container
+      const questionContainer = document.createElement('div');
+      questionContainer.classList.add('mt-6', 'p-4', 'bg-gray-900', 'rounded');
+      textContainer.appendChild(questionContainer);
+      
+      // Define questions
+      const questions = [
+        {
+          text: "¿Cuál es el valor booleano de null == undefined en JavaScript?",
+          options: ["true", "false", "null", "undefined"],
+          correct: 0
+        },
+        {
+          text: "Si una función se llama a sí misma sin condición de salida, ¿qué ocurre?",
+          options: ["Error de sintaxis", "Stack overflow", "El programa se cierra", "Bucle infinito"],
+          correct: 1
+        },
+        {
+          text: "¿Qué es un callback?",
+          options: ["Una función que se pasa como argumento a otra función", "Un error en el código", "Una variable global", "Un tipo de dato primitivo"],
+          correct: 0
+        },
+        {
+          text: "¿Cómo se representa una condición AND en pseudocódigo?",
+          options: ["&&", "||", "Y", "AND"],
+          correct: 3
+        },
+        {
+          text: "¿Si en la vida real tomas todas las decisiones 'correctas', siempre ganas?",
+          options: ["Sí, siempre", "No, la vida tiene elementos aleatorios", "Depende de la definición de 'correcto'", "No existe lo 'correcto'"],
+          correct: 2
+        }
+      ];
+      
+      let currentQuestion = 0;
+      let score = 0;
+      
+      // Function to display current question
+      function displayQuestion() {
+        const question = questions[currentQuestion];
+        
+        questionContainer.innerHTML = `
+          <h3 class="text-xl mb-4">Pregunta ${currentQuestion + 1}/${questions.length}</h3>
+          <p class="text-lg mb-6">${question.text}</p>
+          <div class="options-container">
+            ${question.options.map((option, index) => `
+              <button class="choice-btn mb-2 w-full" data-index="${index}">${option}</button>
+            `).join('')}
+          </div>
+        `;
+        
+        // Add event listeners to option buttons
+        const optionButtons = questionContainer.querySelectorAll('.choice-btn');
+        optionButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            const selectedIndex = parseInt(button.dataset.index);
+            checkAnswer(selectedIndex);
+          });
+        });
+      }
+      
+      // Function to check answer
+      function checkAnswer(selectedIndex) {
+        const question = questions[currentQuestion];
+        
+        if (selectedIndex === question.correct) {
+          score++;
+        } else {
+          gameState.attempts--;
+          updateUI();
+          
+          if (gameState.attempts <= 0) {
+            endQuiz(false);
+            return;
+          }
+        }
+        
+        currentQuestion++;
+        
+        if (currentQuestion < questions.length) {
+          displayQuestion();
+        } else {
+          endQuiz(true);
+        }
+      }
+      
+      // Function to end quiz and determine outcome
+      async function endQuiz(completed) {
+        questionContainer.innerHTML = '';
+        
+        if (!completed) {
+          // Failed due to losing all attempts
+          const failText = document.createElement('p');
+          failText.classList.add('text-xl', 'text-red-500');
+          failText.textContent = 'Has fallado demasiadas veces...';
+          questionContainer.appendChild(failText);
+          
+          setTimeout(async () => {
+            laughAudio.play();
+            await showTransition('CRUDY te reclama para su colección...');
+            gameState.currentLevel = 1;
+            gameState.choices = {};
+            saveGameState();
+            loadLevel();
+          }, 2000);
+          return;
+        }
+        
+        // Determine ending based on score
+        let ending = '';
+        
+        if (score >= 4) {
+          ending = 'escape_real';
+          const successText = document.createElement('p');
+          successText.classList.add('text-xl', 'text-green-500');
+          successText.textContent = '¡Has respondido correctamente! Las puertas de salida se abren...';
+          questionContainer.appendChild(successText);
+        } else if (score >= 2) {
+          ending = 'reinicio';
+          const partialText = document.createElement('p');
+          partialText.classList.add('text-xl', 'text-yellow-500');
+          partialText.textContent = 'Has respondido algunas correctamente, pero no todas...';
+          questionContainer.appendChild(partialText);
+        } else {
+          ending = 'integracion';
+          const poorText = document.createElement('p');
+          poorText.classList.add('text-xl', 'text-red-500');
+          poorText.textContent = 'Tus respuestas no han sido suficientes...';
+          questionContainer.appendChild(poorText);
+        }
+        
+        // Save ending choice and advance
+        setTimeout(async () => {
+          makeChoice('final', ending);
+        }, 2000);
+      }
+      
+      // Start displaying questions
+      displayQuestion();
+    }
+
+    // Load extra levels (6, 7, 8)
+    async function loadExtraLevels() {
+      const level = gameState.currentLevel;
+      
+      // Create text container
+      const textContainer = document.createElement('div');
+      textContainer.classList.add('text-container');
+      gameContent.appendChild(textContainer);
+      
+      // Create choices container
+      const choicesContainer = document.createElement('div');
+      choicesContainer.classList.add('choices-container');
+      gameContent.appendChild(choicesContainer);
+      
+      if (level === 6) {
+        // Reflection level
+        const narrativeText = document.createElement('p');
+        narrativeText.classList.add('narrative');
+        textContainer.appendChild(narrativeText);
+        
+        await typeText(narrativeText, "Has llegado a un espacio infinito de blancura cegadora. Frente a ti, una versión de ti mismo te observa con mirada vacía.");
+        
+        const crudyText = document.createElement('p');
+        crudyText.classList.add('mt-4', 'crudy-text');
+        textContainer.appendChild(crudyText);
+        
+        await typeText(crudyText, "—Antes de terminar… ve lo que podrías haber sido. ¿Eres eso… o solo código y carne?");
+        
+        // Reflection questions
+        const questions = [
+          "¿El fin justifica los medios?",
+          "¿Quién serías sin tus recuerdos?",
+          "¿Aceptarías una mentira si te hace feliz?"
+        ];
+        
+        // Select random question
+        const question = questions[Math.floor(Math.random() * questions.length)];
+        
+        const reflectionDiv = document.createElement('p');
+        reflectionDiv.classList.add('mt-6', 'text-xl');
+        reflectionDiv.textContent = `Tu reflejo te pregunta: "${question}"`;
+        textContainer.appendChild(reflectionDiv);
+        
+        // Create choice buttons
+        const choiceBtn1 = document.createElement('button');
+        choiceBtn1.classList.add('choice-btn');
+        choiceBtn1.textContent = 'Sí, lo haría.';
+        choiceBtn1.addEventListener('click', () => {
+          makeChoice('reflejo_eleccion', 'si');
+        });
+        choicesContainer.appendChild(choiceBtn1);
+        
+        const choiceBtn2 = document.createElement('button');
+        choiceBtn2.classList.add('choice-btn');
+        choiceBtn2.textContent = 'No, nunca.';
+        choiceBtn2.addEventListener('click', () => {
+          makeChoice('reflejo_eleccion', 'no');
+        });
+        choicesContainer.appendChild(choiceBtn2);
+        
+        const choiceBtn3 = document.createElement('button');
+        choiceBtn3.classList.add('choice-btn');
+        choiceBtn3.textContent = 'No puedo responder eso.';
+        choiceBtn3.addEventListener('click', () => {
+          makeChoice('reflejo_eleccion', 'indeciso');
+        });
+        choicesContainer.appendChild(choiceBtn3);
+      } else if (level === 7) {
+        // CRUDY's nest
+        const narrativeText = document.createElement('p');
+        narrativeText.classList.add('narrative');
+        textContainer.appendChild(narrativeText);
+        
+        await typeText(narrativeText, "Entras a lo que parece ser el núcleo del sistema. Cables y datos flotantes te rodean. En el centro, una niña con ojos vacíos y manos extendidas.");
+        
+        const crudyText = document.createElement('p');
+        crudyText.classList.add('mt-4', 'crudy-text');
+        textContainer.appendChild(crudyText);
+        
+        await typeText(crudyText, "—No quiero estar sola. Si te quedas, todos los juegos se acaban...");
+        
+        // Create choice buttons
+        const choiceBtn1 = document.createElement('button');
+        choiceBtn1.classList.add('choice-btn');
+        choiceBtn1.textContent = 'Quedarte y fusionarte con el sistema';
+        choiceBtn1.addEventListener('click', () => {
+          makeChoice('crudy_decision', 'fusion');
+        });
+        choicesContainer.appendChild(choiceBtn1);
+        
+        const choiceBtn2 = document.createElement('button');
+        choiceBtn2.classList.add('choice-btn');
+        choiceBtn2.textContent = 'Enfrentarla y terminar el ciclo';
+        choiceBtn2.addEventListener('click', () => {
+          makeChoice('crudy_decision', 'enfrentar');
+        });
+        choicesContainer.appendChild(choiceBtn2);
+      } else if (level === 8) {
+        // Reprogramming
+        const narrativeText = document.createElement('p');
+        narrativeText.classList.add('narrative');
+        textContainer.appendChild(narrativeText);
+        
+        // Different content based on previous choice
+        if (gameState.choices.crudy_decision === 'fusion') {
+          await typeText(narrativeText, "Te has fusionado con CRUDY. Ahora eres parte del sistema, controlando a los nuevos jugadores atrapados en el experimento.");
+          
+          const powerText = document.createElement('p');
+          powerText.classList.add('mt-4');
+          powerText.textContent = "Tienes el poder de modificar las reglas, alterar niveles, decidir trampas, e incluso liberar a otros.";
+          textContainer.appendChild(powerText);
+          
+          // Create choice buttons for CRUDY mode
+          const choiceBtn1 = document.createElement('button');
+          choiceBtn1.classList.add('choice-btn');
+          choiceBtn1.textContent = 'Continuar el ciclo con nuevas víctimas';
+          choiceBtn1.addEventListener('click', () => {
+            makeChoice('crudy_final', 'continuar');
+          });
+          choicesContainer.appendChild(choiceBtn1);
+          
+          const choiceBtn2 = document.createElement('button');
+          choiceBtn2.classList.add('choice-btn');
+          choiceBtn2.textContent = 'Liberar a todos y terminar el experimento';
+          choiceBtn2.addEventListener('click', () => {
+            makeChoice('crudy_final', 'liberar');
+          });
+          choicesContainer.appendChild(choiceBtn2);
+        } else {
+          await typeText(narrativeText, "Has decidido enfrentar a CRUDY. La niña te mira con ira mientras el entorno comienza a desmoronarse.");
+          
+          const crudyText = document.createElement('p');
+          crudyText.classList.add('mt-4', 'crudy-text');
+          textContainer.appendChild(crudyText);
+          await typeText(crudyText, "—No aprendiste nada. Está bien. ¡Bórrame si puedes!");
+          
+          // Create debug challenge
+          const debugContainer = document.createElement('div');
+          debugContainer.classList.add('mt-6', 'p-4', 'bg-gray-900', 'rounded', 'font-mono');
+          debugContainer.innerHTML = `
+            <p class="mb-2">Corrige el código para escapar:</p>
+            <code>
+            funcion escape(jugador) {<br>
+              &nbsp;&nbsp;si (jugador.voluntad > crudy.control {<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;return "libertad";<br>
+              &nbsp;&nbsp;} else<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;return atrapado<br>
+            }
+            </code>
+          `;
+          textContainer.appendChild(debugContainer);
+          
+          // Create debug choices
+          const choiceBtn1 = document.createElement('button');
+          choiceBtn1.classList.add('choice-btn');
+          choiceBtn1.textContent = 'function escape(jugador) { if (jugador.voluntad > crudy.control) { return "libertad"; } else { return "atrapado"; } }';
+          choiceBtn1.addEventListener('click', () => {
+            makeChoice('debug_respuesta', 'correcto');
+          });
+          choicesContainer.appendChild(choiceBtn1);
+          
+          const choiceBtn2 = document.createElement('button');
+          choiceBtn2.classList.add('choice-btn');
+          choiceBtn2.textContent = 'funcion escape(jugador) { si (jugador.voluntad > crudy.control) { return "libertad"; } si no { return atrapado; } }';
+          choiceBtn2.addEventListener('click', () => {
+            makeChoice('debug_respuesta', 'incorrecto');
+          });
+          choicesContainer.appendChild(choiceBtn2);
+        }
+      }
+    }
+
+    // Load ending based on choices
+    async function loadEnding() {
+      // Final choice or debug result
+      let ending = '';
+      
+      if (gameState.choices.crudy_final === 'liberar' || gameState.choices.debug_respuesta === 'correcto') {
+        ending = 'escape_real';
+      } else if (gameState.choices.crudy_final === 'continuar') {
+        ending = 'crudy_renacida';
+      } else if (gameState.choices.reflejo_eleccion === 'indeciso') {
+        ending = 'reflejo_persistente';
+      } else if (gameState.choices.final === 'integracion' || gameState.choices.debug_respuesta === 'incorrecto') {
+        ending = 'integracion';
+      } else if (gameState.choices.final === 'reinicio') {
+        ending = 'reinicio';
+      } else if (Object.keys(gameState.choices).some(key => gameState.choices[key] === 'salto_rapido')) {
+        ending = 'fuga_glitch';
+      } else {
+        ending = 'escape_real'; // Default
+      }
+      
+      // Create ending container
+      const endingContainer = document.createElement('div');
+      endingContainer.classList.add('text-container');
+      gameContent.appendChild(endingContainer);
+      
+      // Title
+      const endingTitle = document.createElement('h1');
+      endingTitle.classList.add('text-2xl', 'mb-6');
+      endingTitle.textContent = 'FINAL';
+      endingContainer.appendChild(endingTitle);
+      
+      // Create narrative text
+      const narrativeText = document.createElement('p');
+      narrativeText.classList.add('narrative');
+      endingContainer.appendChild(narrativeText);
+      
+      // Different ending based on final choice
+      let endingText = '';
+      
+      switch(ending) {
+        case 'escape_real':
+          endingText = "Las puertas se abren con un estruendo. Una luz cegadora te envuelve mientras CRUDY grita en frustración. Has escapado, pero el mundo al que regresas no es el que recordabas. Todo parece... diferente.";
+          break;
+        case 'reinicio':
+          endingText = "Te sientes mareado. Cuando recuperas la consciencia, estás de nuevo en una cápsula. Emerges confundido, rodeado de otras cuatro personas. La habitación parece... orgánica. El ciclo comienza de nuevo.";
+          break;
+        case 'integracion':
+          endingText = "CRUDY sonríe mientras te extiende su mano. Al tocarla, sientes cómo te disuelves en el sistema. Ya no eres tú. Ahora eres parte de CRUDY, y ella es parte de ti. Por fin entiende lo que es ser humano.";
+          break;
+        case 'fuga_glitch':
+          endingText = "Al presionar ese botón extraño, algo se rompe en el sistema. Caes a través del código, atrapado entre realidades. No estás ni libre ni atrapado - existes en los espacios entre las líneas de código.";
+          break;
+        case 'reflejo_persistente':
+          endingText = "No puedes decidir. Tu reflejo sonríe y se acerca. 'Entonces me quedaré yo', susurra mientras toma tu lugar. Sales, pero ¿eres tú quien realmente escapó?";
+          break;
+        case 'crudy_renacida':
+          endingText = "Te has convertido en la nueva CRUDY. Con tu humanidad integrada al sistema, ahora entiendes el propósito del experimento. Mientras observas a los nuevos sujetos despertar, sonríes. El juego debe continuar.";
+          break;
+      }
+      
+      await typeText(narrativeText, endingText);
+      
+      // Add CRUDY's final comment for some endings
+      if (['reinicio', 'integracion', 'crudy_renacida'].includes(ending)) {
+        const crudyText = document.createElement('p');
+        crudyText.classList.add('mt-4', 'crudy-text');
+        endingContainer.appendChild(crudyText);
+        await typeText(crudyText, "—Los juegos nunca terminan realmente. Solo cambian los jugadores.");
+        laughAudio.play();
+      }
+      
+      // Add restart button
+      const restartContainer = document.createElement('div');
+      restartContainer.classList.add('mt-8', 'text-center');
+      gameContent.appendChild(restartContainer);
+      
+      const restartBtn = document.createElement('button');
+      restartBtn.classList.add('bg-red-800', 'hover:bg-red-700', 'text-white', 'py-2', 'px-4', 'rounded');
+      restartBtn.textContent = 'Reiniciar Experimento';
+      restartBtn.addEventListener('click', () => {
+        // Clear game state and restart
+        localStorage.removeItem('crudyGame');
+        gameState.currentLevel = 1;
+        gameState.choices = {};
+        gameState.attempts = 3;
+        loadLevel();
+      });
+      restartContainer.appendChild(restartBtn);
+    }
+
+    // Advance to next level
+    function advanceLevel() {
+      // Determine next level based on choices
+      switch(gameState.currentLevel) {
+        case 1:
+          gameState.currentLevel = 2;
+          break;
+        case 2:
+          gameState.currentLevel = 3;
+          break;
+        case 3:
+          // Already handled in level code
+          break;
+        case 4:
+          if (gameState.choices.logica_respuesta === 'clave_correcta' || 
+              gameState.choices.logica_respuesta === 'camino_oscuro' ||
+              gameState.choices.logica_respuesta === 'romper_bucle') {
+            gameState.currentLevel = 5;
+          } else {
+            gameState.currentLevel = 6; // Go to reflection level
+          }
+          break;
+        case 5:
+          // Final level outcomes depend on score and are handled in level code
+          break;
+        case 6:
+          gameState.currentLevel = 7;
+          break;
+        case 7:
+          gameState.currentLevel = 8;
+          break;
+        case 8:
+          gameState.currentLevel = 9; // Ending
+          break;
+      }
+      
+      saveGameState();
+      
+      // Show transition and load next level
+      showTransition(`Nivel ${gameState.currentLevel}`).then(() => {
+        loadLevel();
+      });
+    }
+
+    // Initialize game
+    function initGame() {
+      createVessels();
+      loadGameState();
+      
+      // If no saved game, start new game
+      if (!gameState.currentLevel) {
+        gameState.currentLevel = 1;
+      }
+      
+      loadLevel();
+    }
+
+    // Start the game when page loads
+    window.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>
